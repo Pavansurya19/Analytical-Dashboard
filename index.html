@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meghana Foods — Customer Intelligence Platform</title>
+  <meta name="description" content="Meghana Foods Customer Intelligence Platform — analyze reviews, sentiment trends, and live menu ratings across all branches.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ---- Homepage-only styles ---- */
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 36px; left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      animation: fadeIn 2s 1.5s ease both;
+    }
+
+    .scroll-mouse {
+      width: 24px; height: 36px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 6px;
+    }
+
+    .scroll-mouse::before {
+      content: '';
+      width: 3px; height: 7px;
+      background: var(--text-muted);
+      border-radius: 3px;
+      animation: scrollBounce 1.5s infinite;
+    }
+
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      60%       { transform: translateY(8px); opacity: 0.3; }
+    }
+
+    /* Social proof logos strip */
+    .platforms-strip {
+      padding: 48px 24px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.01);
+    }
+
+    .platforms-strip p {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .platform-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+
+    .platform-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: color var(--transition-base);
+    }
+
+    .platform-logo:hover { color: var(--text-secondary); }
+    .platform-logo i { font-size: 1.3rem; }
+
+    /* CTA Bottom section */
+    .cta-section {
+      padding: 100px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255,107,53,0.08), transparent);
+    }
+
+    .cta-card {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 56px 48px;
+      border-radius: var(--radius-xl);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--teal));
+    }
+
+    /* Number ticker styling override for homepage */
+    .stat-value.orange { color: var(--primary); }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.purple { color: var(--accent); }
+  </style>
+</head>
+
+<body>
+  <!-- Custom Cursor -->
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- ==============================
+       NAVBAR
+       ============================== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="nav-brand" href="index.html" aria-label="Meghana Foods Home">
+      <div class="brand-icon"><i class="fa-solid fa-bowl-rice"></i></div>
+      <span>Meghana <span>Foods</span></span>
+    </a>
+
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html" class="active" id="nav-home"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="dashboard.html" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="mining.html" id="nav-mining"><i class="fa-solid fa-magnifying-glass-chart"></i> Text Mining</a></li>
+      <li><a href="menu.html" class="nav-cta" id="nav-menu"><i class="fa-solid fa-utensils"></i> Live Menu</a></li>
+    </ul>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle mobile menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ==============================
+       PAGE CONTENT
+       ============================== -->
+  <div class="page-wrapper">
+
+    <!-- HERO -->
+    <section class="hero" id="hero" aria-labelledby="hero-heading">
+      <div class="hero-bg">
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+        <div class="hero-orb hero-orb-3"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          LIVE ANALYTICS PLATFORM
+        </div>
+
+        <h1 class="hero-title" id="hero-heading">
+          Meghana Foods:<br>
+          <span class="gradient-text">Customer Intelligence</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Real-time sentiment analysis, review tracking, and customer insights —
+          all in one powerful platform for smarter business decisions.
+        </p>
+
+        <div class="hero-actions">
+          <a href="dashboard.html" class="btn btn-primary" id="btn-view-dashboard">
+            <i class="fa-solid fa-chart-pie"></i>
+            View Dashboard
+          </a>
+          <a href="menu.html" class="btn btn-secondary" id="btn-live-menu">
+            <i class="fa-solid fa-utensils"></i>
+            Live Menu Ratings
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-scroll-hint" aria-hidden="true">
+        <div class="scroll-mouse"></div>
+        Scroll to explore
+      </div>
+    </section>
+
+    <!-- PLATFORMS STRIP -->
+    <div class="platforms-strip" aria-label="Data sources">
+      <p>Aggregating reviews from</p>
+      <div class="platform-logos">
+        <div class="platform-logo"><i class="fa-brands fa-google" style="color:#4285F4"></i> Google Reviews</div>
+        <div class="platform-logo"><i class="fa-solid fa-motorcycle" style="color:#E23744"></i> Zomato</div>
+        <div class="platform-logo"><i class="fa-solid fa-bag-shopping" style="color:#FC8019"></i> Swiggy</div>
+        <div class="platform-logo"><i class="fa-brands fa-instagram" style="color:#E1306C"></i> Instagram</div>
+        <div class="platform-logo"><i class="fa-brands fa-tripadvisor" style="color:#34E0A1"></i> TripAdvisor</div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <section class="stats-section" aria-labelledby="stats-heading">
+      <p class="section-label"><i class="fa-solid fa-bolt"></i> Live Metrics</p>
+      <h2 class="section-title" id="stats-heading">At a Glance</h2>
+      <p class="section-subtitle">Key performance indicators updated from live customer review data across all branches.</p>
+
+      <div class="stats-grid">
+        <div class="stat-card card reveal delay-1" id="stat-reviews">
+          <div class="stat-icon orange"><i class="fa-solid fa-star"></i></div>
+          <div class="stat-value orange" data-count="40" data-suffix="">0</div>
+          <div class="stat-label">Total Reviews Collected</div>
+          <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +14% this month</div>
+          <i class="fa-solid fa-star card-bg-icon" aria-hidden="true"></i>
+        </div>
+
+        <div class="stat-card card reveal delay-2" id="stat-positive">
+          <div class="stat-icon green"><i class="fa-solid fa-face-smile"></i></div>
+          <div class="stat-value green" data-count="72" data-suffix="%">0%</div>
+          <div class="stat-label">Positive Sentiment Rate</div>
+          <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +3% vs last quarter</div>
+          <i class="fa-solid fa-face-smile card-bg-icon" aria-hidden="true" style="color:var(--green)"></i>
+        </div>
+
+        <div class="stat-card card reveal delay-3" id="stat-avg-rating">
+          <div class="stat-icon purple"><i class="fa-solid fa-award"></i></div>
+          <div class="stat-value purple" data-count="4.3" data-suffix="★">0★</div>
+          <div class="stat-label">Average Star Rating</div>
+          <div class="stat-trend up"><i class="fa-solid fa-arrow-trend-up"></i> Top 5% in Bangalore</div>
+          <i class="fa-solid fa-award card-bg-icon" aria-hidden="true" style="color:var(--accent)"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features-section" aria-labelledby="features-heading">
+      <div class="features-inner">
+        <p class="section-label"><i class="fa-solid fa-sparkles"></i> Platform Features</p>
+        <h2 class="section-title" id="features-heading">Everything You Need</h2>
+        <p class="section-subtitle">From raw reviews to actionable insights, our platform covers the full analytics lifecycle.</p>
+
+        <div class="features-grid">
+          <div class="feature-card card reveal delay-1">
+            <div class="feature-icon orange stat-icon">
+              <i class="fa-solid fa-chart-pie"></i>
+            </div>
+            <h3 class="feature-title">Sentiment Analytics</h3>
+            <p class="feature-desc">AI-powered sentiment classification — positive, neutral, negative — across all review sources with drill-down by branch.</p>
+            <a href="dashboard.html" class="btn btn-secondary btn-sm" style="margin-top:16px" id="feature-link-dashboard">
+              Open Dashboard <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="feature-card card reveal delay-2">
+            <div class="feature-icon purple stat-icon" style="background:rgba(124,58,237,0.15);color:var(--accent)">
+              <i class="fa-solid fa-magnifying-glass-chart"></i>
+            </div>
+            <h3 class="feature-title">Text Mining</h3>
+            <p class="feature-desc">Dynamic word clouds, top negative bigrams, and a fully searchable review table with live filters.</p>
+            <a href="mining.html" class="btn btn-secondary btn-sm" style="margin-top:16px" id="feature-link-mining">
+              Explore Mining <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="feature-card card reveal delay-3">
+            <div class="feature-icon teal stat-icon" style="background:rgba(6,182,212,0.15);color:var(--teal)">
+              <i class="fa-solid fa-utensils"></i>
+            </div>
+            <h3 class="feature-title">Live Menu Ratings</h3>
+            <p class="feature-desc">Public-facing menu cards with real-time star ratings. Customers can submit reviews directly from the menu page.</p>
+            <a href="menu.html" class="btn btn-secondary btn-sm" style="margin-top:16px" id="feature-link-menu">
+              View Menu <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          </div>
+
+          <div class="feature-card card reveal delay-4">
+            <div class="feature-icon pink stat-icon" style="background:rgba(236,72,153,0.15);color:var(--pink)">
+              <i class="fa-solid fa-filter"></i>
+            </div>
+            <h3 class="feature-title">Dynamic Filtering</h3>
+            <p class="feature-desc">Filter any chart or dataset by branch, sentiment, platform, and date range — with instant real-time updates.</p>
+          </div>
+
+          <div class="feature-card card reveal delay-5">
+            <div class="feature-icon yellow stat-icon" style="background:rgba(245,158,11,0.15);color:var(--yellow)">
+              <i class="fa-solid fa-sheet-plastic"></i>
+            </div>
+            <h3 class="feature-title">Google Sheets Integration</h3>
+            <p class="feature-desc">Plug in your Google Sheet CSV URL and the entire platform populates with live data via the Fetch API.</p>
+          </div>
+
+          <div class="feature-card card reveal delay-1">
+            <div class="feature-icon green stat-icon">
+              <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <h3 class="feature-title">Fully Responsive</h3>
+            <p class="feature-desc">Works beautifully on all screen sizes — from wide-screen dashboards to mobile review submissions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" aria-labelledby="cta-heading">
+      <div class="cta-card card reveal">
+        <p class="section-label" style="margin-bottom:12px"><i class="fa-solid fa-rocket"></i> Get Started</p>
+        <h2 id="cta-heading" style="font-size:2rem;font-weight:800;letter-spacing:-1px;margin-bottom:16px">
+          Ready to explore the data?
+        </h2>
+        <p style="color:var(--text-secondary);margin-bottom:32px;max-width:460px;margin-left:auto;margin-right:auto">
+          Dive into the full analytics dashboard, explore customer sentiment, or browse live menu ratings — all powered by real data.
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="dashboard.html" class="btn btn-primary" id="cta-btn-dashboard">
+            <i class="fa-solid fa-chart-line"></i> Analytics Dashboard
+          </a>
+          <a href="menu.html" class="btn btn-secondary" id="cta-btn-menu">
+            <i class="fa-solid fa-star"></i> Live Menu
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>
+        &copy; 2024 <strong>Meghana Foods</strong> Customer Intelligence Platform.
+        Built with <i class="fa-solid fa-heart" style="color:var(--primary)"></i> for the management team.
+        <span style="margin:0 8px">·</span>
+        <a href="dashboard.html">Dashboard</a> &nbsp;·&nbsp;
+        <a href="mining.html">Text Mining</a> &nbsp;·&nbsp;
+        <a href="menu.html">Menu</a>
+      </p>
+    </footer>
+
+  </div><!-- .page-wrapper -->
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>

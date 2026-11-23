@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Mining — Meghana Foods</title>
+  <meta name="description" content="Text mining insights for Meghana Foods — word cloud, top negative phrases, and searchable review table.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* ---- Mining-page-specific overrides ---- */
+    .mining-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .mining-full { grid-column: 1 / -1; }
+
+    /* Insight highlight strip */
+    .insight-strip {
+      background: rgba(255,107,53,0.05);
+      border: 1px solid rgba(255,107,53,0.15);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .insight-strip i { font-size: 1.3rem; color: var(--primary); flex-shrink: 0; }
+    .insight-strip p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; }
+    .insight-strip strong { color: var(--text-primary); }
+
+    /* Wordcloud toggle tabs */
+    .wc-tabs-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 0;
+    }
+
+    /* Insight card for metrics */
+    .insight-metric {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      transition: all var(--transition-base);
+    }
+
+    .insight-metric:hover { border-color: var(--border-hover); }
+
+    .insight-metric .im-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .insight-metric .im-label { font-size: 0.78rem; color: var(--text-muted); }
+    .insight-metric .im-value { font-size: 1.1rem; font-weight: 800; }
+
+    /* Review count badge in table header */
+    .table-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: rgba(255,107,53,0.1);
+      border: 1px solid rgba(255,107,53,0.2);
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .wc-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 24px 20px;
+    }
+
+    .wc-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .wc-legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Summary donut inside text mining */
+    .mini-sent-bars {
+      padding: 20px 24px;
+    }
+
+    .mini-sent-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+
+    .mini-sent-bar-label { width: 70px; color: var(--text-secondary); flex-shrink: 0; }
+    .mini-sent-bar-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .mini-sent-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease 0.3s; }
+    .mini-sent-bar-pct { width: 36px; text-align:right; font-weight: 700; flex-shrink:0; }
+
+    @media (max-width: 900px) {
+      .mining-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .mining-layout { padding: 16px; }
+      .wc-tabs-wrapper { flex-direction:column; gap:12px; align-items:flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="nav-brand" href="index.html" aria-label="Meghana Foods Home">
+      <div class="brand-icon"><i class="fa-solid fa-bowl-rice"></i></div>
+      <span>Meghana <span>Foods</span></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html"     id="nav-home"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="dashboard.html" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="mining.html"    id="nav-mining" class="active"><i class="fa-solid fa-magnifying-glass-chart"></i> Text Mining</a></li>
+      <li><a href="menu.html"      class="nav-cta" id="nav-menu"><i class="fa-solid fa-utensils"></i> Live Menu</a></li>
+    </ul>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle mobile menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="page-wrapper">
+
+    <!-- PAGE HEADER -->
+    <header class="dashboard-header" aria-labelledby="mining-heading">
+      <h1 class="page-title" id="mining-heading">
+        <span class="gradient-text">Text Mining</span> &amp; Insights
+      </h1>
+      <p class="page-subtitle">Natural language analysis of customer reviews — word frequencies, bigrams, and raw review explorer.</p>
+    </header>
+
+    <!-- INSIGHT STRIP -->
+    <div style="padding: 0 32px; max-width:1400px; margin:0 auto 8px">
+      <div class="insight-strip" role="note">
+        <i class="fa-solid fa-lightbulb"></i>
+        <p>
+          <strong>Key Finding:</strong> "Late delivery" is the most common complaint phrase, appearing in <strong>12</strong> negative reviews.
+          Positive reviews most frequently mention "biryani" and "delicious" — indicating strong food quality perception.
+        </p>
+      </div>
+    </div>
+
+    <!-- MAIN MINING LAYOUT -->
+    <main class="mining-layout" aria-label="Text mining content">
+
+      <!-- ==================== WORD CLOUD ==================== -->
+      <div class="card mining-full reveal" aria-labelledby="wc-heading">
+        <div class="wc-tabs-wrapper">
+          <div>
+            <h2 class="chart-title" id="wc-heading">
+              <i class="fa-solid fa-cloud" style="color:var(--primary)"></i> Review Word Cloud
+            </h2>
+            <p class="chart-subtitle">Most frequent words in customer reviews — size indicates frequency</p>
+          </div>
+          <div class="wc-tab-group" role="tablist" aria-label="Word cloud sentiment filter">
+            <button class="wc-tab active" data-type="positive" role="tab" aria-selected="true" id="wc-tab-positive">
+              <i class="fa-solid fa-face-smile"></i> Positive
+            </button>
+            <button class="wc-tab" data-type="negative" role="tab" aria-selected="false" id="wc-tab-negative">
+              <i class="fa-solid fa-face-frown"></i> Negative
+            </button>
+          </div>
+        </div>
+
+        <div class="wc-legend" aria-label="Word cloud legend">
+          <div class="wc-legend-item"><div class="wc-legend-dot" style="background:#FF6B35"></div> High frequency</div>
+          <div class="wc-legend-item"><div class="wc-legend-dot" style="background:#7C3AED"></div> Medium frequency</div>
+          <div class="wc-legend-item"><div class="wc-legend-dot" style="background:#06B6D4"></div> Lower frequency</div>
+        </div>
+
+        <div class="wordcloud-container" id="wordcloud-container" aria-live="polite" aria-label="Word cloud visualization">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- ==================== BIGRAMS ==================== -->
+      <div class="card reveal delay-1" aria-labelledby="bigrams-heading">
+        <div style="padding:24px 24px 0">
+          <h2 class="chart-title" id="bigrams-heading">
+            <i class="fa-solid fa-quote-left" style="color:#EF4444"></i> Top Negative Phrases
+          </h2>
+          <p class="chart-subtitle">Most common two-word phrases in negative reviews (bigrams)</p>
+        </div>
+        <ul class="phrase-list" id="bigrams-list" aria-label="Top negative bigrams">
+          <!-- Populated by JS -->
+        </ul>
+      </div>
+
+      <!-- ==================== SENTIMENT SUMMARY ==================== -->
+      <div class="card reveal delay-2" aria-labelledby="sent-summary-heading">
+        <div style="padding:24px 24px 0">
+          <h2 class="chart-title" id="sent-summary-heading">
+            <i class="fa-solid fa-chart-pie" style="color:var(--accent)"></i> Sentiment Summary
+          </h2>
+          <p class="chart-subtitle">Overall distribution across all reviews</p>
+        </div>
+
+        <div class="mini-sent-bars" aria-label="Sentiment percentages">
+          <div class="mini-sent-bar-row">
+            <div class="mini-sent-bar-label">Positive</div>
+            <div class="mini-sent-bar-track">
+              <div class="mini-sent-bar-fill" style="width:72%;background:var(--green)"></div>
+            </div>
+            <div class="mini-sent-bar-pct text-green">72%</div>
+          </div>
+          <div class="mini-sent-bar-row">
+            <div class="mini-sent-bar-label">Neutral</div>
+            <div class="mini-sent-bar-track">
+              <div class="mini-sent-bar-fill" style="width:13%;background:var(--yellow)"></div>
+            </div>
+            <div class="mini-sent-bar-pct text-yellow">13%</div>
+          </div>
+          <div class="mini-sent-bar-row">
+            <div class="mini-sent-bar-label">Negative</div>
+            <div class="mini-sent-bar-track">
+              <div class="mini-sent-bar-fill" style="width:15%;background:#EF4444"></div>
+            </div>
+            <div class="mini-sent-bar-pct text-red">15%</div>
+          </div>
+        </div>
+
+        <div style="padding: 0 24px 24px; display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="insight-metric">
+            <div class="im-icon stat-icon orange"><i class="fa-solid fa-comments"></i></div>
+            <div>
+              <div class="im-label">Total Reviews</div>
+              <div class="im-value">40</div>
+            </div>
+          </div>
+          <div class="insight-metric">
+            <div class="im-icon stat-icon green"><i class="fa-solid fa-star"></i></div>
+            <div>
+              <div class="im-label">Avg Rating</div>
+              <div class="im-value text-green">4.3★</div>
+            </div>
+          </div>
+          <div class="insight-metric">
+            <div class="im-icon" style="width:36px;height:36px;border-radius:8px;background:rgba(239,68,68,0.15);color:#EF4444;display:flex;align-items:center;justify-content:center;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div class="im-label">Critical Issues</div>
+              <div class="im-value text-red">6</div>
+            </div>
+          </div>
+          <div class="insight-metric">
+            <div class="im-icon stat-icon purple"><i class="fa-solid fa-trophy"></i></div>
+            <div>
+              <div class="im-label">Best Branch</div>
+              <div class="im-value" style="color:var(--accent);font-size:0.9rem">Koramangala</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== REVIEWS TABLE ==================== -->
+      <div class="card mining-full reveal" aria-labelledby="reviews-table-heading">
+        <div style="padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 class="chart-title" id="reviews-table-heading">
+              <i class="fa-solid fa-table" style="color:var(--teal)"></i> Review Explorer
+            </h2>
+            <p class="chart-subtitle">Browse, search, and filter all customer reviews</p>
+          </div>
+          <span class="table-count" id="review-count-badge">
+            <i class="fa-solid fa-hashtag"></i> 40 reviews
+          </span>
+        </div>
+
+        <div class="reviews-table-wrapper">
+          <!-- Controls -->
+          <div class="table-controls">
+            <input
+              type="search"
+              class="search-input"
+              id="review-search"
+              placeholder="&#xf002;  Search by reviewer name or review text..."
+              aria-label="Search reviews"
+            >
+            <select class="filter-group select" id="review-sent-filter" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-family:Outfit,sans-serif;font-size:.9rem;padding:10px 14px;min-width:160px" aria-label="Filter by sentiment">
+              <option value="All">All Sentiments</option>
+              <option value="Positive">Positive</option>
+              <option value="Neutral">Neutral</option>
+              <option value="Negative">Negative</option>
+            </select>
+            <select class="filter-group select" id="review-branch-filter" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);font-family:Outfit,sans-serif;font-size:.9rem;padding:10px 14px;min-width:160px" aria-label="Filter by branch">
+              <option value="All">All Branches</option>
+              <option value="Jayanagar">Jayanagar</option>
+              <option value="Koramangala">Koramangala</option>
+              <option value="Indiranagar">Indiranagar</option>
+            </select>
+          </div>
+
+          <!-- Table -->
+          <table class="reviews-table" aria-label="Customer reviews table">
+            <thead>
+              <tr>
+                <th scope="col">Reviewer</th>
+                <th scope="col">Review</th>
+                <th scope="col">Rating</th>
+                <th scope="col">Branch</th>
+                <th scope="col">Sentiment</th>
+                <th scope="col">Date</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+
+          <p style="margin-top:16px;font-size:0.78rem;color:var(--text-muted);text-align:center">
+            Showing top 25 results · <a href="#" style="color:var(--primary)" onclick="return false">Load more</a>
+          </p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>
+        &copy; 2024 <strong>Meghana Foods</strong> Intelligence Platform ·
+        <a href="index.html">Home</a> &nbsp;·&nbsp;
+        <a href="dashboard.html">Dashboard</a> &nbsp;·&nbsp;
+        <a href="menu.html">Menu</a>
+      </p>
+    </footer>
+
+  </div><!-- .page-wrapper -->
+
+  <script src="script.js"></script>
+  <script>
+    // Update review count badge when table is filtered
+    const origRenderTable = renderReviewTable;
+    function patchedRenderTable(reviews) {
+      origRenderTable(reviews);
+      const badge = document.getElementById('review-count-badge');
+      if (badge) badge.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${reviews.length} reviews`;
+    }
+
+    // Override the global function reference after page load
+    document.addEventListener('DOMContentLoaded', () => {
+      // Monkey-patch table render to also update count badge
+      const inputs = ['review-search','review-sent-filter','review-branch-filter'];
+      inputs.forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateBadge);
+        document.getElementById(id)?.addEventListener('change', updateBadge);
+      });
+    });
+
+    function updateBadge() {
+      const q = document.getElementById('review-search')?.value.toLowerCase() || '';
+      const s = document.getElementById('review-sent-filter')?.value || 'All';
+      const b = document.getElementById('review-branch-filter')?.value || 'All';
+      const count = (typeof allReviews !== 'undefined' ? allReviews : []).filter(r =>
+        (q ? r.review_text.toLowerCase().includes(q) || r.reviewer_name.toLowerCase().includes(q) : true) &&
+        (s !== 'All' ? r.sentiment_label === s : true) &&
+        (b !== 'All' ? r.branch === b : true)
+      ).length;
+      const badge = document.getElementById('review-count-badge');
+      if (badge) badge.innerHTML = `<i class="fa-solid fa-hashtag"></i> ${count} reviews`;
+    }
+  </script>
+</body>
+</html>

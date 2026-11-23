@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Dashboard — Meghana Foods</title>
+  <meta name="description" content="Interactive analytics dashboard for Meghana Foods — sentiment trends, review volume, branch performance, and aspect ratings.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* Gradient KPI borders */
+    .kpi-card.kpi-total    { background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,107,53,0.02)); border-color: rgba(255,107,53,0.2); }
+    .kpi-card.kpi-pos      { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02)); border-color: rgba(16,185,129,0.2); }
+    .kpi-card.kpi-neg      { background: linear-gradient(135deg, rgba(239,68,68,0.08),  rgba(239,68,68,0.02));  border-color: rgba(239,68,68,0.2);  }
+    .kpi-card.kpi-avg      { background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.02)); border-color: rgba(124,58,237,0.2); }
+
+    .kpi-card:hover { transform: translateY(-3px); }
+
+    /* Doughnut centre label */
+    .doughnut-centre {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .doughnut-centre .dc-val  { font-size: 2rem; font-weight: 900; letter-spacing: -1px; }
+    .doughnut-centre .dc-lbl  { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; }
+
+    .chart-wrap.doughnut-wrap {
+      position: relative;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* Platform pill badges */
+    .badge-green  { background: rgba(16,185,129,0.12); color: var(--green); }
+    .badge-orange { background: rgba(255,107,53,0.12);  color: var(--primary); }
+    .badge-purple { background: rgba(124,58,237,0.12);  color: var(--accent); }
+    .badge-teal   { background: rgba(6,182,212,0.12);   color: var(--teal); }
+
+    /* Rating bar on KPI */
+    .kpi-mini-bar {
+      display: flex;
+      gap: 3px;
+      margin-top: 8px;
+    }
+
+    .kpi-mini-bar span {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .kpi-mini-bar span::after {
+      content: '';
+      display: block;
+      height: 100%;
+      border-radius: 2px;
+      background: var(--fill-color, var(--primary));
+      width: var(--fill-width, 0%);
+      transition: width 1s ease 0.3s;
+    }
+
+    /* Platform breakdown table inside chart card */
+    .platform-table {
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .platform-table td {
+      padding: 8px 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+
+    .platform-table td:last-child {
+      text-align: right;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .pt-bar {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 4px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .pt-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+
+    /* Chart container heights */
+    #chart-sentiment { max-height: 260px; }
+    #chart-volume    { max-height: 240px; }
+    #chart-branch    { max-height: 240px; }
+    #chart-aspects   { max-height: 280px; }
+  </style>
+</head>
+
+<body>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="nav-brand" href="index.html" aria-label="Meghana Foods Home">
+      <div class="brand-icon"><i class="fa-solid fa-bowl-rice"></i></div>
+      <span>Meghana <span>Foods</span></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html"      id="nav-home"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="dashboard.html"  id="nav-dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+      <li><a href="mining.html"     id="nav-mining"><i class="fa-solid fa-magnifying-glass-chart"></i> Text Mining</a></li>
+      <li><a href="menu.html"       class="nav-cta" id="nav-menu"><i class="fa-solid fa-utensils"></i> Live Menu</a></li>
+    </ul>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle mobile menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="page-wrapper">
+
+    <!-- PAGE HEADER -->
+    <header class="dashboard-header" aria-labelledby="dash-heading">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 class="page-title" id="dash-heading">
+            <span class="gradient-text">Analytics</span> Dashboard
+          </h1>
+          <p class="page-subtitle">
+            <i class="fa-solid fa-circle" style="color:var(--green);font-size:0.6rem;margin-right:6px"></i>
+            Live data · Last updated: <span id="last-updated"></span>
+          </p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" id="btn-export" onclick="alert('Export feature coming soon!')">
+            <i class="fa-solid fa-download"></i> Export PDF
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh" onclick="location.reload()">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar reveal" role="form" aria-label="Dashboard filters">
+      <div class="filter-group">
+        <label for="filter-branch"><i class="fa-solid fa-location-dot"></i> Branch</label>
+        <select id="filter-branch">
+          <option value="All">All Branches</option>
+          <option value="Jayanagar">Jayanagar</option>
+          <option value="Koramangala">Koramangala</option>
+          <option value="Indiranagar">Indiranagar</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-sentiment"><i class="fa-solid fa-face-smile"></i> Sentiment</label>
+        <select id="filter-sentiment">
+          <option value="All">All Sentiments</option>
+          <option value="Positive">Positive</option>
+          <option value="Neutral">Neutral</option>
+          <option value="Negative">Negative</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-start"><i class="fa-solid fa-calendar-days"></i> Start Date</label>
+        <input type="date" id="filter-start">
+      </div>
+
+      <div class="filter-group">
+        <label for="filter-end"><i class="fa-solid fa-calendar-check"></i> End Date</label>
+        <input type="date" id="filter-end">
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary btn-sm" id="btn-apply-filters" onclick="document.getElementById('filter-branch').dispatchEvent(new Event('change'))">
+          <i class="fa-solid fa-sliders"></i> Apply
+        </button>
+        <button class="btn btn-secondary btn-sm" id="btn-reset-filters">
+          <i class="fa-solid fa-xmark"></i> Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid" role="region" aria-label="Key performance indicators">
+
+      <div class="kpi-card card kpi-total reveal delay-1">
+        <div class="kpi-icon stat-icon orange"><i class="fa-solid fa-comments"></i></div>
+        <div class="kpi-label"><i class="fa-solid fa-hashtag"></i> Total Reviews</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">Across all branches &amp; platforms</div>
+      </div>
+
+      <div class="kpi-card card kpi-pos reveal delay-2">
+        <div class="kpi-icon stat-icon green"><i class="fa-solid fa-thumbs-up"></i></div>
+        <div class="kpi-label"><i class="fa-solid fa-face-smile"></i> Positive Rate</div>
+        <div class="kpi-value text-green" id="kpi-positive">—</div>
+        <div class="kpi-sub">Of filtered reviews</div>
+      </div>
+
+      <div class="kpi-card card kpi-neg reveal delay-3">
+        <div class="kpi-icon stat-icon pink" style="background:rgba(239,68,68,0.15);color:#EF4444">
+          <i class="fa-solid fa-thumbs-down"></i>
+        </div>
+        <div class="kpi-label"><i class="fa-solid fa-face-frown"></i> Negative Rate</div>
+        <div class="kpi-value text-red" id="kpi-negative">—</div>
+        <div class="kpi-sub">Of filtered reviews</div>
+      </div>
+
+      <div class="kpi-card card kpi-avg reveal delay-4">
+        <div class="kpi-icon stat-icon purple"><i class="fa-solid fa-star"></i></div>
+        <div class="kpi-label"><i class="fa-solid fa-chart-simple"></i> Avg Star Rating</div>
+        <div class="kpi-value" style="color:var(--accent)" id="kpi-avg-rating">—</div>
+        <div class="kpi-sub">Out of 5.0</div>
+      </div>
+
+    </div><!-- .kpi-grid -->
+
+    <!-- CHARTS -->
+    <div class="charts-container" role="region" aria-label="Charts and visualizations">
+
+      <!-- ROW 1: Sentiment Doughnut + Volume Line -->
+      <div class="charts-row charts-row-2">
+
+        <!-- Sentiment Doughnut -->
+        <div class="chart-card card reveal delay-1">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title"><i class="fa-solid fa-chart-pie" style="color:var(--primary)"></i> Sentiment Split</div>
+              <div class="chart-subtitle">Distribution of review sentiments</div>
+            </div>
+            <span class="chart-badge badge-orange">Filtered</span>
+          </div>
+          <div class="chart-wrap doughnut-wrap">
+            <canvas id="chart-sentiment" aria-label="Sentiment distribution doughnut chart" role="img"></canvas>
+            <div class="doughnut-centre">
+              <div class="dc-val gradient-text" id="dc-pos-pct">—%</div>
+              <div class="dc-lbl">Positive</div>
+            </div>
+          </div>
+          <!-- Platform breakdown below -->
+          <div style="margin-top:24px">
+            <div class="chart-subtitle" style="margin-bottom:12px;font-weight:600">By Platform</div>
+            <table class="platform-table" aria-label="Reviews by platform">
+              <tbody>
+                <tr>
+                  <td><i class="fa-brands fa-google" style="color:#4285F4;margin-right:8px"></i>Google</td>
+                  <td>
+                    <div class="pt-bar"><div class="pt-bar-fill" style="width:62%;background:#4285F4"></div></div>
+                  </td>
+                  <td>18 reviews</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-motorcycle" style="color:#E23744;margin-right:8px"></i>Zomato</td>
+                  <td>
+                    <div class="pt-bar"><div class="pt-bar-fill" style="width:48%;background:#E23744"></div></div>
+                  </td>
+                  <td>13 reviews</td>
+                </tr>
+                <tr>
+                  <td><i class="fa-solid fa-bag-shopping" style="color:#FC8019;margin-right:8px"></i>Swiggy</td>
+                  <td>
+                    <div class="pt-bar"><div class="pt-bar-fill" style="width:35%;background:#FC8019"></div></div>
+                  </td>
+                  <td>9 reviews</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Volume Line Chart -->
+        <div class="chart-card card reveal delay-2">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title"><i class="fa-solid fa-chart-line" style="color:var(--teal)"></i> Review Volume Over Time</div>
+              <div class="chart-subtitle">Monthly review count by sentiment</div>
+            </div>
+            <span class="chart-badge badge-teal">Monthly</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-volume" aria-label="Review volume line chart" role="img"></canvas>
+          </div>
+        </div>
+
+      </div><!-- .charts-row -->
+
+      <!-- ROW 2: Branch Bar + Aspects Radar -->
+      <div class="charts-row charts-row-2-rev">
+
+        <!-- Branch Bar Chart -->
+        <div class="chart-card card reveal delay-1">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title"><i class="fa-solid fa-chart-bar" style="color:var(--green)"></i> Sentiment by Branch</div>
+              <div class="chart-subtitle">Positive / Neutral / Negative breakdown per location</div>
+            </div>
+            <span class="chart-badge badge-green">Branches</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-branch" aria-label="Sentiment by branch bar chart" role="img"></canvas>
+          </div>
+          <!-- Legend -->
+          <div class="legend" style="margin-top:16px">
+            <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div>Positive</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div>Neutral</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div>Negative</div>
+          </div>
+        </div>
+
+        <!-- Aspects Radar -->
+        <div class="chart-card card reveal delay-2">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title"><i class="fa-solid fa-spider" style="color:var(--accent)"></i> Aspect Performance</div>
+              <div class="chart-subtitle">Score out of 5 — derived from review keywords</div>
+            </div>
+            <span class="chart-badge badge-purple">AI Derived</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-aspects" aria-label="Aspect performance radar chart" role="img"></canvas>
+          </div>
+          <!-- Aspect scores list -->
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px" id="aspect-scores-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div><!-- .charts-row -->
+
+    </div><!-- .charts-container -->
+
+    <!-- FOOTER -->
+    <footer>
+      <p>
+        &copy; 2024 <strong>Meghana Foods</strong> Intelligence Platform ·
+        <a href="index.html">Home</a> &nbsp;·&nbsp;
+        <a href="mining.html">Text Mining</a> &nbsp;·&nbsp;
+        <a href="menu.html">Menu</a>
+      </p>
+    </footer>
+
+  </div><!-- .page-wrapper -->
+
+  <script src="script.js"></script>
+  <script>
+    // Update last-updated timestamp
+    document.getElementById('last-updated').textContent =
+      new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+    // After charts built, sync the doughnut centre label
+    const _origBuild = buildSentimentDoughnut;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Hook into KPI update to also update doughnut centre
+      const origKPI = updateKPIs;
+    });
+
+    // Patch: update doughnut centre after KPI refresh
+    function afterKPIUpdate(reviews) {
+      const pct = document.getElementById('kpi-positive')?.textContent || '—';
+      const el  = document.getElementById('dc-pos-pct');
+      if (el) el.textContent = pct;
+    }
+
+    // Also populate aspect scores list
+    function populateAspectList() {
+      const labels = ['Taste','Service','Delivery','Price','Hygiene','Portions'];
+      const scores = typeof deriveAspectScores === 'function'
+        ? deriveAspectScores(typeof allReviews !== 'undefined' ? allReviews : [])
+        : [4.2, 3.8, 3.5, 3.9, 4.1, 4.0];
+
+      const container = document.getElementById('aspect-scores-list');
+      if (!container) return;
+      const colors = ['#FF6B35','#10B981','#06B6D4','#F59E0B','#EC4899','#7C3AED'];
+      container.innerHTML = labels.map((l, i) => `
+        <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem">
+          <div style="width:8px;height:8px;border-radius:50%;background:${colors[i]};flex-shrink:0"></div>
+          <span style="color:var(--text-secondary)">${l}</span>
+          <span style="margin-left:auto;font-weight:700;color:${colors[i]}">${scores[i]}</span>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(populateAspectList, 300);
+      // Sync doughnut centre once KPIs are ready
+      setTimeout(() => {
+        const pct = document.getElementById('kpi-positive')?.textContent;
+        const el  = document.getElementById('dc-pos-pct');
+        if (el && pct) el.textContent = pct;
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
