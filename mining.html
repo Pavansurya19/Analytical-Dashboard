@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Mining | Meghana Foods</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">Meghana Foods</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="mining.html" class="active">Text Mining</a></li>
+      <li><a href="menu.html">Menu & Reviews</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-wrapper">
+    <div class="container">
+      <div class="page-header reveal">
+        <h1>Text Mining & Insights</h1>
+        <p>Natural language analysis of customer reviews.</p>
+      </div>
+
+      <div class="card reveal" style="margin-bottom: 40px;">
+        <h3 class="chart-title">Review Word Cloud (Positive)</h3>
+        <div class="wordcloud-wrapper" id="wordcloud-container"></div>
+      </div>
+
+      <div class="grid-2 reveal">
+        <div class="card">
+          <h3 class="chart-title">Top Negative Phrases</h3>
+          <ul id="bigrams-list" style="list-style: none;"></ul>
+        </div>
+        <div class="card">
+          <h3 class="chart-title">Sentiment Summary</h3>
+          <!-- Additional summary can go here -->
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <h3 class="chart-title">Review Explorer</h3>
+        <div class="search-box">
+            <input type="text" id="table-search" placeholder="Search reviews by keyword or name...">
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Reviewer</th>
+                <th>Review</th>
+                <th>Branch</th>
+                <th>Sentiment</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
