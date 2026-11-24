@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Meghana Foods</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">Meghana Foods</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="mining.html">Text Mining</a></li>
+      <li><a href="menu.html">Menu & Reviews</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-wrapper">
+    <div class="container">
+      <div class="page-header reveal">
+        <h1>Analytics Dashboard</h1>
+        <p>Filter data by branch, sentiment, and date to monitor performance.</p>
+      </div>
+
+      <div class="filter-bar reveal">
+        <div class="filter-group">
+          <label>Branch</label>
+          <select id="filter-branch">
+            <option value="All">All Branches</option>
+            <option value="Jayanagar">Jayanagar</option>
+            <option value="Koramangala">Koramangala</option>
+            <option value="Indiranagar">Indiranagar</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Sentiment</label>
+          <select id="filter-sentiment">
+            <option value="All">All Sentiments</option>
+            <option value="Positive">Positive</option>
+            <option value="Neutral">Neutral</option>
+            <option value="Negative">Negative</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Start Date</label>
+          <input type="date" id="filter-start">
+        </div>
+        <div class="filter-group">
+          <label>End Date</label>
+          <input type="date" id="filter-end">
+        </div>
+      </div>
+
+      <div class="grid-4 reveal" style="margin-bottom: 40px;">
+        <div class="card kpi-card">
+          <div class="kpi-title">Total Reviews</div>
+          <div class="kpi-value" id="kpi-total">0</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Positive %</div>
+          <div class="kpi-value" id="kpi-positive" style="color: var(--green);">0%</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Negative %</div>
+          <div class="kpi-value" id="kpi-negative" style="color: var(--red);">0%</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-title">Avg Rating</div>
+          <div class="kpi-value" id="kpi-avg-rating" style="color: var(--accent);">0</div>
+        </div>
+      </div>
+
+      <div class="grid-2 reveal">
+        <div class="chart-container">
+          <h3 class="chart-title">Sentiment Split</h3>
+          <div class="chart-body">
+            <canvas id="chart-sentiment"></canvas>
+          </div>
+        </div>
+        <div class="chart-container">
+          <h3 class="chart-title">Review Volume Trend</h3>
+          <div class="chart-body">
+            <canvas id="chart-volume"></canvas>
+          </div>
+        </div>
+        <div class="chart-container">
+          <h3 class="chart-title">Performance by Branch</h3>
+          <div class="chart-body">
+            <canvas id="chart-branch"></canvas>
+          </div>
+        </div>
+        <div class="chart-container">
+          <h3 class="chart-title">Aspect Performance</h3>
+          <div class="chart-body">
+            <canvas id="chart-aspects"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
